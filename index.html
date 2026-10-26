@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบตัดสินใจการระบายน้ำ ปตร.ปลายคลองภักดีรำไพ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts - Sarabun / Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Header / Navigation -->
+    <header class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 bg-blue-500/20 rounded-xl border border-blue-400/30 backdrop-blur-sm">
+                        <i data-lucide="waves" class="w-8 h-8 text-blue-400"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white">ระบบช่วยตัดสินใจระบายน้ำ ปตร.ปลายคลองภักดีรำไพ</h1>
+                        <p class="text-xs md:text-sm text-blue-200 mt-0.5">เทียบเคียงข้อมูลระดับน้ำทำนาย แหลมสิงห์ จ.จันทบุรี (คำนวณปรับลด -0.95 ม. มรท.)</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-950/60 border border-blue-700/50 rounded-xl px-4 py-2 text-right">
+                        <span class="text-xs text-blue-300 block">ช่วงข้อมูลอ้างอิง</span>
+                        <span class="text-sm font-semibold text-white">ต.ค. - ธ.ค. 2569</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Rule & Criteria Alert Banner -->
+        <div class="bg-amber-50 border-l-4 border-amber-500 rounded-r-xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-start space-x-3">
+                <i data-lucide="shield-alert" class="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                <div>
+                    <h3 class="font-bold text-amber-900 text-sm md:text-base">เกณฑ์การบริหารจัดการประตูระบายน้ำ (ป้องกันกระทบประมงพื้นบ้าน)</h3>
+                    <p class="text-xs md:text-sm text-amber-800 mt-0.5">
+                        • <span class="font-semibold text-emerald-700">แนะนำเปิดบานระบายน้ำ (🟢):</span> ช่วง <span class="font-bold underline">น้ำเริ่มลง</span> ถึง <span class="font-bold underline">น้ำลงต่ำสุด</span> (เพื่อช่วยการระบายน้ำและไม่ต้านกระแสน้ำเรือประมง)<br>
+                        • <span class="font-semibold text-rose-700">แนะนำปิดบานระบายน้ำ (🔴):</span> ช่วง <span class="font-bold underline">น้ำเริ่มขึ้น</span> ถึง <span class="font-bold underline">น้ำขึ้นสูงสุด</span> (ป้องกันน้ำเค็มหนุนและกระแสน้ำเชี่ยวหนุนกลับ)
+                    </p>
+                </div>
+            </div>
+            <div class="flex gap-2 text-xs font-semibold self-end md:self-center flex-shrink-0">
+                <span class="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-300 flex items-center gap-1">
+                    <i data-lucide="arrow-down-right" class="w-4 h-4 text-emerald-600"></i> เปิดระบาย (น้ำลง)
+                </span>
+                <span class="px-3 py-1.5 bg-rose-100 text-rose-800 rounded-lg border border-rose-300 flex items-center gap-1">
+                    <i data-lucide="arrow-up-right" class="w-4 h-4 text-rose-600"></i> ปิดประตู (น้ำขึ้น)
+                </span>
+            </div>
+        </div>
+
+        <!-- Date Picker & Smart Auto-Recommendation Search Panel -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <div class="border-b border-slate-100 pb-4 mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="calendar-search" class="w-5 h-5 text-blue-600"></i>
+                        ค้นหาช่วงเวลาระบายน้ำที่เหมาะสมประจำวัน
+                    </h2>
+                    <p class="text-xs text-slate-500">เลือกวันที่ต้องการเปิดระบายน้ำ ระบบจะคำนวณช่วงเวลาทอง (Golden Window) สำหรับเปิดประตูระบายน้ำให้อัตโนมัติ</p>
+                </div>
+                <span class="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full border border-blue-200">
+                    Auto-Analysis Enabled
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mb-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">เลือกเดือน</label>
+                    <div class="relative">
+                        <select id="monthSelect" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none font-medium">
+                            <option value="10">ตุลาคม 2569 (October 2026)</option>
+                            <option value="11">พฤศจิกายน 2569 (November 2026)</option>
+                            <option value="12">ธันวาคม 2569 (December 2026)</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">เลือกวันที่ต้องการระบายน้ำ</label>
+                    <div class="relative">
+                        <select id="daySelect" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none font-medium">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">เวลาสุ่มตรวจรายชั่วโมง (น.)</label>
+                    <div class="relative">
+                        <select id="hourSelect" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none font-medium">
+                            <!-- Populated dynamically 00:00 to 23:00 -->
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auto Recommended Windows Card -->
+            <div id="smartRecommendationBox" class="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white rounded-xl p-5 shadow-md">
+                <div class="flex items-center justify-between border-b border-emerald-700/50 pb-3 mb-4">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-emerald-400 animate-pulse"></i>
+                        <h3 class="font-bold text-base text-emerald-100">สรุปช่วงเวลาที่เหมาะสมสำหรับเปิดระบายน้ำประจำวันที่ <span id="recDateLabel">--</span></h3>
+                    </div>
+                    <span id="totalOpenHoursBadge" class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-lg text-xs font-bold">
+                        รวมประมาณ -- ชั่วโมง/วัน
+                    </span>
+                </div>
+
+                <div id="recommendedTimeSlots" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Populated dynamically with optimal time slots -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Realtime Hour Status Card & Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Active Hour Detailed Status -->
+            <div id="statusCard" class="md:col-span-2 rounded-2xl border p-6 flex flex-col justify-between transition-all duration-300 shadow-sm bg-white">
+                <div>
+                    <div class="flex justify-between items-start mb-3">
+                        <span id="statusBadge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border">
+                            --
+                        </span>
+                        <span id="selectedTimeLabel" class="text-sm font-semibold text-slate-500">
+                            เวลา --:00 น.
+                        </span>
+                    </div>
+                    <h2 id="statusTitle" class="text-2xl font-bold mb-2">กำลังคำนวณข้อมูล...</h2>
+                    <p id="statusDesc" class="text-slate-600 text-sm leading-relaxed mb-4">
+                        --
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-200/60 mt-2 text-center">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+                        <div class="text-xs text-slate-500 font-medium">ระดับน้ำท้าย ปตร.</div>
+                        <div id="currentTailWater" class="text-xl font-bold text-blue-700 mt-1">-- ม.</div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+                        <div class="text-xs text-slate-500 font-medium">ระดับน้ำแหลมสิงห์เดิม</div>
+                        <div id="currentRawWater" class="text-xl font-bold text-slate-600 mt-1">-- ม.</div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+                        <div class="text-xs text-slate-500 font-medium">สถานะแนวโน้ม</div>
+                        <div id="waterTrend" class="text-lg font-bold text-slate-700 mt-1">--</div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+                        <div class="text-xs text-slate-500 font-medium">การเปลี่ยนแปลง (1ชม.)</div>
+                        <div id="waterDiff" class="text-lg font-bold text-slate-700 mt-1">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Operating Principles -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center gap-2">
+                        <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+                        เหตุผลทางเทคนิคเกณฑ์การระบายน้ำ
+                    </h3>
+                    <ul class="space-y-3 text-xs text-slate-600">
+                        <li class="flex items-start gap-2">
+                            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 flex-shrink-0"></span>
+                            <span><strong>เปิดระบายน้ำช่วงน้ำลง:</strong> ความแตกต่างระดับน้ำในคลองกับทะเลสูง ทำให้ระบายน้ำได้เร็ว กระแสน้ำไหลไปทางเดียวกับเรือประมงออกทะเล</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500 mt-1 flex-shrink-0"></span>
+                            <span><strong>ปิดบานประตูช่วงน้ำขึ้น:</strong> ป้องกันน้ำเค็มและขยะทะเลไหลย้อนกลับเข้าคลองภักดีรำไพ และลดแรงต้านกระแสน้ำปะทะเรือประมง</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 mt-1 flex-shrink-0"></span>
+                            <span><strong>ระดับอ้างอิงท้าย ปตร.:</strong> ระดับน้ำท้าย ปตร. = ระดับน้ำทำนายแหลมสิงห์ - 0.95 ม.</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
+                    <span>กรมอุทกศาสตร์ กองทัพเรือ</span>
+                    <button id="todayBtn" class="text-blue-600 hover:underline font-semibold flex items-center gap-1">
+                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i> วันที่ 1
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Water Level Chart Section -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <i data-lucide="line-chart" class="w-5 h-5 text-blue-600"></i>
+                        กราฟแสดงระดับน้ำรายชั่วโมงและการเปิด-ปิดประตูระบายน้ำ
+                    </h3>
+                    <p class="text-xs text-slate-500" id="chartSubTitle">ประจำวันที่ --</p>
+                </div>
+                <div class="flex items-center gap-3 text-xs">
+                    <span class="inline-flex items-center gap-1.5 font-medium"><span class="w-3 h-3 bg-blue-600 rounded-full inline-block"></span> ระดับน้ำท้าย ปตร. (-0.95m)</span>
+                    <span class="inline-flex items-center gap-1.5 font-medium text-slate-500"><span class="w-3 h-3 bg-slate-300 rounded-full inline-block"></span> ระดับน้ำแหลมสิงห์เดิม</span>
+                </div>
+            </div>
+            <div class="relative h-64 sm:h-80 w-full">
+                <canvas id="tideChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Data Table Section -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <i data-lucide="table" class="w-5 h-5 text-blue-600"></i>
+                        ตารางระดับน้ำและการวิเคราะห์คำแนะนำรายชั่วโมง
+                    </h3>
+                    <p class="text-xs text-slate-500">คลิกที่แถวตารางเพื่อดูคำแนะนำและไฮไลต์ตำแหน่งบนกราฟ</p>
+                </div>
+                <button id="exportCsvBtn" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition duration-150 flex items-center gap-2 border border-slate-300">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    ส่งออก CSV
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left border-collapse">
+                    <thead class="text-xs uppercase bg-slate-100 text-slate-600 border-b border-slate-200">
+                        <tr>
+                            <th class="py-3.5 px-4 font-semibold text-center">เวลา</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">ระดับน้ำเดิม แหลมสิงห์ (ม.)</th>
+                            <th class="py-3.5 px-4 font-semibold text-center bg-blue-50 text-blue-900">ระดับน้ำท้าย ปตร. (ม.)</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">แนวโน้มระดับน้ำ</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">คำแนะนำเกณฑ์การระบายน้ำ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-200">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 mt-8 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p>ระบบช่วยตัดสินใจและตรวจสอบช่วงเวลาเปิด-ปิดประตูระบายน้ำ ปตร.ปลายคลองภักดีรำไพ จ.จันทบุรี</p>
+            <p class="text-slate-500">คำนวณปรับแก้ระดับน้ำฐานจากสถานีแหลมสิงห์ กรมอุทกศาสตร์ กองทัพเรือ (-0.95 เมตร)</p>
+        </div>
+    </footer>
+
+    <!-- Application Logic Script -->
+    <script>
+        // --- TIDE DATA STORE (October, November, December 2026) ---
+        const tideData = {
+            10: { // October 2026
+                1: [0.7, 0.8, 1.0, 1.1, 1.3, 1.4, 1.6, 1.7, 1.8, 1.8, 1.9, 1.9, 2.0, 2.1, 2.2, 2.1, 2.1, 1.9, 1.7, 1.5, 1.3, 1.1, 0.9, 0.7],
+                2: [0.6, 0.6, 0.7, 0.9, 1.1, 1.2, 1.4, 1.5, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.2, 2.3, 2.2, 2.1, 1.9, 1.7, 1.5, 1.2, 1.0, 0.8],
+                3: [0.7, 0.6, 0.6, 0.7, 0.8, 1.0, 1.2, 1.3, 1.5, 1.7, 1.8, 2.0, 2.1, 2.2, 2.3, 2.3, 2.3, 2.2, 2.1, 1.9, 1.7, 1.4, 1.2, 1.0],
+                4: [0.8, 0.7, 0.6, 0.6, 0.7, 0.8, 1.0, 1.1, 1.3, 1.5, 1.7, 1.9, 2.0, 2.1, 2.2, 2.3, 2.3, 2.3, 2.2, 2.1, 1.9, 1.7, 1.4, 1.2],
+                5: [1.0, 0.8, 0.7, 0.6, 0.6, 0.7, 0.8, 1.0, 1.1, 1.3, 1.5, 1.7, 1.9, 2.0, 2.1, 2.2, 2.2, 2.2, 2.2, 2.1, 2.0, 1.8, 1.6, 1.4],
+                6: [1.2, 1.0, 0.9, 0.7, 0.7, 0.7, 0.7, 0.8, 1.0, 1.2, 1.4, 1.6, 1.7, 1.9, 2.0, 2.1, 2.1, 2.1, 2.1, 2.0, 2.0, 1.9, 1.7, 1.6],
+                7: [1.4, 1.2, 1.1, 0.9, 0.8, 0.8, 0.8, 0.8, 0.9, 1.1, 1.3, 1.5, 1.6, 1.8, 1.9, 1.9, 2.0, 1.9, 1.9, 1.9, 1.8, 1.8, 1.7, 1.6],
+                8: [1.5, 1.4, 1.3, 1.1, 1.0, 1.0, 0.9, 0.9, 1.0, 1.1, 1.3, 1.4, 1.6, 1.7, 1.8, 1.8, 1.8, 1.8, 1.7, 1.7, 1.6, 1.6, 1.6, 1.6],
+                9: [1.6, 1.5, 1.4, 1.3, 1.3, 1.2, 1.1, 1.1, 1.1, 1.2, 1.3, 1.5, 1.6, 1.7, 1.8, 1.8, 1.7, 1.7, 1.6, 1.5, 1.4, 1.4, 1.4, 1.5],
+                10: [1.5, 1.5, 1.5, 1.5, 1.4, 1.4, 1.3, 1.3, 1.3, 1.3, 1.4, 1.5, 1.7, 1.7, 1.8, 1.7, 1.7, 1.6, 1.5, 1.3, 1.2, 1.2, 1.2, 1.3],
+                11: [1.4, 1.4, 1.5, 1.5, 1.6, 1.6, 1.5, 1.5, 1.5, 1.5, 1.6, 1.7, 1.8, 1.8, 1.8, 1.8, 1.7, 1.6, 1.4, 1.2, 1.1, 1.0, 1.0, 1.1],
+                12: [1.2, 1.3, 1.4, 1.5, 1.6, 1.6, 1.7, 1.7, 1.6, 1.7, 1.7, 1.8, 1.9, 1.9, 1.9, 1.8, 1.7, 1.6, 1.4, 1.2, 1.1, 0.9, 0.9, 0.9],
+                13: [1.0, 1.1, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.8, 1.8, 1.8, 1.9, 2.0, 2.0, 2.0, 1.9, 1.8, 1.6, 1.4, 1.3, 1.1, 0.9, 0.8, 0.8],
+                14: [0.9, 1.0, 1.2, 1.3, 1.5, 1.6, 1.7, 1.8, 1.8, 1.9, 1.9, 2.0, 2.0, 2.1, 2.1, 2.0, 1.9, 1.7, 1.5, 1.3, 1.1, 1.0, 0.8, 0.8],
+                15: [0.8, 0.9, 1.0, 1.2, 1.3, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.0, 2.1, 2.1, 2.2, 2.1, 2.0, 1.8, 1.7, 1.4, 1.2, 1.0, 0.9, 0.8],
+                16: [0.8, 0.8, 0.9, 1.0, 1.2, 1.3, 1.5, 1.6, 1.8, 1.9, 1.9, 2.0, 2.1, 2.2, 2.2, 2.2, 2.1, 2.0, 1.8, 1.6, 1.4, 1.2, 1.0, 0.9],
+                17: [0.8, 0.8, 0.8, 0.9, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 1.9, 2.0, 2.1, 2.1, 2.2, 2.2, 2.1, 2.0, 1.9, 1.7, 1.5, 1.3, 1.1, 1.0],
+                18: [0.8, 0.8, 0.8, 0.8, 0.9, 1.1, 1.2, 1.4, 1.5, 1.7, 1.8, 1.9, 2.0, 2.1, 2.1, 2.2, 2.1, 2.1, 2.0, 1.8, 1.6, 1.4, 1.3, 1.1],
+                19: [0.9, 0.8, 0.8, 0.8, 0.9, 1.0, 1.1, 1.3, 1.4, 1.6, 1.7, 1.9, 2.0, 2.1, 2.1, 2.1, 2.1, 2.1, 2.0, 1.9, 1.7, 1.5, 1.4, 1.2],
+                20: [1.1, 0.9, 0.9, 0.8, 0.9, 0.9, 1.0, 1.2, 1.3, 1.5, 1.6, 1.8, 1.9, 2.0, 2.1, 2.1, 2.1, 2.0, 1.9, 1.9, 1.7, 1.6, 1.5, 1.3],
+                21: [1.2, 1.1, 1.0, 0.9, 0.9, 0.9, 1.0, 1.1, 1.2, 1.4, 1.6, 1.7, 1.8, 1.9, 2.0, 2.0, 2.0, 1.9, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4],
+                22: [1.3, 1.2, 1.1, 1.0, 1.0, 1.0, 1.0, 1.1, 1.2, 1.4, 1.5, 1.7, 1.8, 1.9, 1.9, 1.9, 1.9, 1.8, 1.8, 1.7, 1.6, 1.6, 1.5, 1.5],
+                23: [1.4, 1.3, 1.3, 1.2, 1.2, 1.1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.7, 1.7, 1.8, 1.8, 1.8, 1.8, 1.7, 1.6, 1.5, 1.5, 1.5, 1.5, 1.5],
+                24: [1.5, 1.4, 1.4, 1.4, 1.3, 1.3, 1.3, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.8, 1.8, 1.7, 1.7, 1.6, 1.4, 1.4, 1.3, 1.3, 1.4, 1.4],
+                25: [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.6, 1.7, 1.8, 1.8, 1.8, 1.8, 1.7, 1.6, 1.5, 1.3, 1.2, 1.1, 1.1, 1.1, 1.3],
+                26: [1.4, 1.5, 1.6, 1.6, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.8, 1.9, 1.9, 1.9, 1.8, 1.7, 1.6, 1.4, 1.2, 1.1, 1.0, 0.9, 0.9, 1.0],
+                27: [1.2, 1.4, 1.5, 1.6, 1.8, 1.8, 1.9, 1.9, 1.9, 1.9, 2.0, 2.0, 2.1, 2.0, 2.0, 1.8, 1.6, 1.5, 1.2, 1.0, 0.9, 0.8, 0.7, 0.8],
+                28: [1.0, 1.2, 1.4, 1.5, 1.7, 1.8, 2.0, 2.0, 2.1, 2.1, 2.1, 2.2, 2.2, 2.2, 2.1, 2.0, 1.8, 1.6, 1.3, 1.1, 0.9, 0.7, 0.6, 0.6],
+                29: [0.7, 0.9, 1.1, 1.4, 1.5, 1.7, 1.9, 2.0, 2.1, 2.2, 2.2, 2.3, 2.3, 2.4, 2.3, 2.2, 2.0, 1.8, 1.5, 1.3, 1.0, 0.8, 0.7, 0.6],
+                30: [0.6, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.2, 2.3, 2.3, 2.4, 2.4, 2.5, 2.4, 2.2, 2.0, 1.8, 1.5, 1.2, 1.0, 0.8, 0.6],
+                31: [0.5, 0.6, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.2, 2.3, 2.4, 2.4, 2.5, 2.5, 2.4, 2.2, 2.0, 1.7, 1.5, 1.2, 1.0, 0.8]
+            },
+            11: { // November 2026
+                1: [0.6, 0.6, 0.6, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.2, 2.3, 2.4, 2.4, 2.4, 2.4, 2.3, 2.1, 1.9, 1.7, 1.4, 1.2, 1.0],
+                2: [0.8, 0.7, 0.6, 0.7, 0.8, 1.0, 1.2, 1.4, 1.5, 1.8, 1.9, 2.1, 2.2, 2.3, 2.3, 2.3, 2.3, 2.3, 2.2, 2.0, 1.8, 1.6, 1.4, 1.2],
+                3: [1.0, 0.9, 0.8, 0.8, 0.8, 1.0, 1.1, 1.3, 1.4, 1.6, 1.8, 2.0, 2.1, 2.1, 2.2, 2.2, 2.2, 2.1, 2.1, 2.0, 1.8, 1.7, 1.5, 1.4],
+                4: [1.2, 1.1, 1.0, 1.0, 1.0, 1.0, 1.1, 1.3, 1.4, 1.6, 1.7, 1.9, 2.0, 2.0, 2.1, 2.0, 2.0, 1.9, 1.9, 1.8, 1.7, 1.7, 1.6, 1.5],
+                5: [1.4, 1.3, 1.2, 1.2, 1.2, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.9, 1.9, 2.0, 2.0, 1.9, 1.8, 1.7, 1.6, 1.6, 1.5, 1.5, 1.5, 1.5],
+                6: [1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.9, 1.9, 1.9, 1.8, 1.7, 1.6, 1.4, 1.4, 1.3, 1.3, 1.3, 1.4],
+                7: [1.4, 1.5, 1.5, 1.5, 1.6, 1.6, 1.6, 1.7, 1.7, 1.8, 1.9, 1.9, 2.0, 1.9, 1.9, 1.8, 1.6, 1.4, 1.3, 1.2, 1.1, 1.1, 1.2, 1.3],
+                8: [1.4, 1.5, 1.6, 1.6, 1.7, 1.7, 1.8, 1.8, 1.9, 1.9, 2.0, 2.0, 2.0, 2.0, 1.9, 1.7, 1.6, 1.4, 1.2, 1.1, 1.0, 0.9, 1.0, 1.1],
+                9: [1.2, 1.4, 1.5, 1.6, 1.8, 1.8, 1.9, 1.9, 2.0, 2.0, 2.1, 2.1, 2.1, 2.0, 1.9, 1.8, 1.6, 1.4, 1.2, 1.0, 0.9, 0.8, 0.8, 0.9],
+                10: [1.1, 1.3, 1.4, 1.6, 1.7, 1.9, 2.0, 2.0, 2.1, 2.1, 2.2, 2.2, 2.2, 2.1, 2.0, 1.9, 1.7, 1.4, 1.2, 1.0, 0.9, 0.8, 0.7, 0.8],
+                11: [0.9, 1.1, 1.3, 1.5, 1.7, 1.8, 2.0, 2.0, 2.1, 2.1, 2.2, 2.2, 2.2, 2.2, 2.1, 2.0, 1.8, 1.6, 1.3, 1.1, 0.9, 0.8, 0.7, 0.7],
+                12: [0.8, 1.0, 1.2, 1.4, 1.5, 1.7, 1.9, 2.0, 2.1, 2.1, 2.2, 2.2, 2.3, 2.3, 2.2, 2.1, 1.9, 1.7, 1.5, 1.2, 1.0, 0.9, 0.8, 0.7],
+                13: [0.7, 0.9, 1.0, 1.2, 1.4, 1.6, 1.7, 1.9, 2.0, 2.1, 2.2, 2.2, 2.3, 2.3, 2.3, 2.2, 2.0, 1.9, 1.6, 1.4, 1.2, 1.0, 0.8, 0.8],
+                14: [0.7, 0.8, 0.9, 1.1, 1.3, 1.5, 1.6, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.3, 2.3, 2.2, 2.1, 2.0, 1.8, 1.5, 1.3, 1.1, 0.9, 0.8],
+                15: [0.8, 0.8, 0.8, 1.0, 1.2, 1.4, 1.5, 1.7, 1.8, 2.0, 2.1, 2.2, 2.2, 2.3, 2.3, 2.3, 2.2, 2.1, 1.9, 1.7, 1.5, 1.2, 1.1, 0.9],
+                16: [0.8, 0.8, 0.8, 0.9, 1.1, 1.3, 1.4, 1.6, 1.8, 1.9, 2.0, 2.1, 2.2, 2.2, 2.2, 2.2, 2.2, 2.1, 1.9, 1.8, 1.6, 1.4, 1.2, 1.0],
+                17: [0.9, 0.9, 0.9, 0.9, 1.0, 1.2, 1.4, 1.5, 1.7, 1.9, 2.0, 2.1, 2.1, 2.2, 2.2, 2.2, 2.1, 2.0, 1.9, 1.8, 1.6, 1.4, 1.3, 1.1],
+                18: [1.0, 1.0, 0.9, 1.0, 1.1, 1.2, 1.3, 1.5, 1.7, 1.8, 1.9, 2.0, 2.1, 2.1, 2.1, 2.1, 2.0, 1.9, 1.8, 1.7, 1.6, 1.5, 1.3, 1.2],
+                19: [1.2, 1.1, 1.1, 1.1, 1.2, 1.2, 1.4, 1.5, 1.6, 1.8, 1.9, 2.0, 2.0, 2.1, 2.0, 2.0, 1.9, 1.8, 1.7, 1.6, 1.6, 1.5, 1.4, 1.3],
+                20: [1.3, 1.2, 1.2, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.9, 2.0, 2.0, 1.9, 1.8, 1.7, 1.6, 1.6, 1.5, 1.5, 1.4, 1.4, 1.4],
+                21: [1.4, 1.4, 1.4, 1.4, 1.5, 1.5, 1.6, 1.7, 1.8, 1.9, 1.9, 1.9, 1.9, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3, 1.3, 1.3, 1.4, 1.4],
+                22: [1.4, 1.5, 1.6, 1.6, 1.7, 1.7, 1.8, 1.8, 1.9, 2.0, 2.0, 2.0, 1.9, 1.9, 1.7, 1.6, 1.5, 1.3, 1.2, 1.1, 1.1, 1.1, 1.2, 1.3],
+                23: [1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.9, 2.0, 2.0, 2.1, 2.1, 2.1, 2.0, 1.9, 1.8, 1.6, 1.4, 1.2, 1.0, 0.9, 0.8, 0.9, 1.0, 1.1],
+                24: [1.3, 1.5, 1.6, 1.8, 1.9, 2.0, 2.1, 2.1, 2.2, 2.2, 2.3, 2.3, 2.2, 2.1, 1.9, 1.7, 1.4, 1.2, 1.0, 0.8, 0.7, 0.7, 0.7, 0.9],
+                25: [1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.2, 2.2, 2.3, 2.3, 2.4, 2.4, 2.4, 2.3, 2.1, 1.8, 1.6, 1.3, 1.1, 0.8, 0.7, 0.6, 0.5, 0.6],
+                26: [0.8, 1.1, 1.3, 1.5, 1.7, 2.0, 2.1, 2.3, 2.3, 2.4, 2.5, 2.5, 2.5, 2.4, 2.3, 2.1, 1.8, 1.5, 1.2, 1.0, 0.8, 0.6, 0.5, 0.5],
+                27: [0.6, 0.8, 1.1, 1.3, 1.5, 1.8, 2.0, 2.2, 2.3, 2.4, 2.5, 2.5, 2.6, 2.6, 2.5, 2.3, 2.1, 1.8, 1.5, 1.2, 0.9, 0.7, 0.6, 0.4],
+                28: [0.5, 0.6, 0.8, 1.1, 1.3, 1.5, 1.8, 2.0, 2.2, 2.3, 2.4, 2.5, 2.6, 2.6, 2.6, 2.5, 2.3, 2.1, 1.8, 1.5, 1.2, 0.9, 0.7, 0.6],
+                29: [0.5, 0.5, 0.7, 0.9, 1.1, 1.4, 1.6, 1.8, 2.0, 2.2, 2.3, 2.4, 2.5, 2.5, 2.5, 2.5, 2.4, 2.2, 2.0, 1.7, 1.4, 1.2, 0.9, 0.8],
+                30: [0.6, 0.6, 0.7, 0.8, 1.0, 1.3, 1.5, 1.7, 1.9, 2.1, 2.2, 2.3, 2.3, 2.4, 2.4, 2.4, 2.4, 2.3, 2.1, 1.8, 1.6, 1.4, 1.2, 1.0]
+            },
+            12: { // December 2026
+                1: [0.8, 0.8, 0.8, 0.9, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.1, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.1, 2.0, 1.9, 1.7, 1.5, 1.3, 1.2],
+                2: [1.1, 1.0, 1.0, 1.0, 1.2, 1.3, 1.5, 1.6, 1.8, 1.9, 2.0, 2.1, 2.1, 2.1, 2.1, 2.0, 2.0, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3],
+                3: [1.3, 1.2, 1.2, 1.2, 1.3, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.0, 2.0, 2.0, 1.9, 1.8, 1.7, 1.6, 1.6, 1.5, 1.5, 1.4, 1.4, 1.4],
+                4: [1.4, 1.4, 1.4, 1.5, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.0, 2.0, 2.0, 1.9, 1.8, 1.7, 1.6, 1.4, 1.3, 1.3, 1.3, 1.3, 1.3, 1.4],
+                5: [1.4, 1.5, 1.6, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.1, 2.1, 2.1, 2.0, 1.9, 1.8, 1.6, 1.4, 1.3, 1.2, 1.1, 1.0, 1.1, 1.2, 1.3],
+                6: [1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.2, 2.2, 2.1, 2.1, 1.9, 1.8, 1.6, 1.4, 1.2, 1.1, 0.9, 0.9, 0.9, 1.0, 1.1],
+                7: [1.3, 1.5, 1.6, 1.8, 1.9, 2.0, 2.1, 2.2, 2.2, 2.3, 2.3, 2.2, 2.1, 2.0, 1.8, 1.6, 1.4, 1.2, 1.0, 0.9, 0.8, 0.8, 0.8, 1.0],
+                8: [1.2, 1.4, 1.5, 1.7, 1.9, 2.0, 2.1, 2.2, 2.2, 2.3, 2.3, 2.3, 2.2, 2.1, 1.9, 1.7, 1.5, 1.2, 1.0, 0.9, 0.8, 0.7, 0.7, 0.8],
+                9: [1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.1, 2.2, 2.2, 2.3, 2.3, 2.3, 2.3, 2.2, 2.0, 1.8, 1.6, 1.3, 1.1, 0.9, 0.8, 0.7, 0.7, 0.7],
+                10: [0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.0, 2.1, 2.2, 2.3, 2.3, 2.3, 2.3, 2.3, 2.1, 2.0, 1.7, 1.5, 1.3, 1.0, 0.9, 0.7, 0.7, 0.6],
+                11: [0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.0, 2.1, 2.2, 2.3, 2.3, 2.3, 2.3, 2.2, 2.1, 1.9, 1.7, 1.4, 1.2, 1.0, 0.8, 0.7, 0.6],
+                12: [0.7, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.1, 2.2, 2.2, 2.3, 2.3, 2.3, 2.3, 2.2, 2.0, 1.8, 1.6, 1.3, 1.1, 0.9, 0.8, 0.7],
+                13: [0.7, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.0, 2.1, 2.2, 2.3, 2.3, 2.3, 2.3, 2.3, 2.1, 1.9, 1.7, 1.5, 1.2, 1.0, 0.9, 0.7],
+                14: [0.7, 0.7, 0.9, 1.0, 1.3, 1.4, 1.6, 1.8, 2.0, 2.1, 2.2, 2.2, 2.3, 2.3, 2.3, 2.2, 2.1, 2.0, 1.8, 1.6, 1.3, 1.1, 1.0, 0.8],
+                15: [0.8, 0.8, 0.9, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.1, 2.2, 2.2, 2.2, 2.2, 2.2, 2.1, 2.0, 1.8, 1.6, 1.4, 1.2, 1.1, 1.0],
+                16: [0.9, 0.9, 0.9, 1.1, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.0, 1.9, 1.8, 1.6, 1.5, 1.3, 1.2, 1.1],
+                17: [1.0, 1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 1.9, 2.0, 2.0, 2.1, 2.1, 2.0, 2.0, 1.9, 1.8, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3, 1.2],
+                18: [1.2, 1.2, 1.2, 1.3, 1.4, 1.6, 1.7, 1.8, 1.9, 2.0, 2.0, 2.0, 2.0, 1.9, 1.8, 1.7, 1.7, 1.6, 1.5, 1.5, 1.4, 1.4, 1.3, 1.3],
+                19: [1.3, 1.4, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.0, 2.0, 1.9, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3, 1.3, 1.3, 1.3, 1.3, 1.4],
+                20: [1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.0, 2.1, 2.1, 2.0, 1.9, 1.8, 1.7, 1.6, 1.4, 1.3, 1.2, 1.1, 1.1, 1.1, 1.2, 1.3, 1.3],
+                21: [1.4, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.2, 2.2, 2.2, 2.0, 1.9, 1.7, 1.5, 1.4, 1.2, 1.0, 0.9, 0.8, 0.8, 0.9, 1.1, 1.2],
+                22: [1.4, 1.5, 1.7, 1.9, 2.0, 2.1, 2.2, 2.3, 2.3, 2.3, 2.3, 2.2, 2.0, 1.8, 1.6, 1.4, 1.2, 1.0, 0.8, 0.7, 0.6, 0.7, 0.8, 1.0],
+                23: [1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.3, 2.4, 2.4, 2.4, 2.5, 2.4, 2.3, 2.1, 1.8, 1.6, 1.3, 1.0, 0.8, 0.6, 0.5, 0.5, 0.5, 0.7],
+                24: [1.0, 1.2, 1.4, 1.7, 1.9, 2.1, 2.3, 2.4, 2.5, 2.5, 2.5, 2.5, 2.5, 2.3, 2.1, 1.8, 1.5, 1.2, 1.0, 0.7, 0.5, 0.4, 0.4, 0.5],
+                25: [0.7, 0.9, 1.2, 1.4, 1.7, 1.9, 2.2, 2.3, 2.4, 2.5, 2.6, 2.6, 2.6, 2.5, 2.4, 2.1, 1.8, 1.5, 1.2, 0.9, 0.7, 0.5, 0.4, 0.3],
+                26: [0.5, 0.7, 1.0, 1.2, 1.5, 1.7, 2.0, 2.2, 2.3, 2.4, 2.5, 2.6, 2.6, 2.6, 2.5, 2.3, 2.1, 1.8, 1.5, 1.2, 0.9, 0.6, 0.5, 0.4],
+                27: [0.4, 0.6, 0.8, 1.1, 1.3, 1.5, 1.8, 2.0, 2.2, 2.3, 2.4, 2.4, 2.5, 2.5, 2.5, 2.4, 2.3, 2.0, 1.7, 1.4, 1.1, 0.9, 0.7, 0.5],
+                28: [0.5, 0.6, 0.8, 1.0, 1.2, 1.4, 1.7, 1.9, 2.1, 2.2, 2.3, 2.3, 2.3, 2.4, 2.4, 2.4, 2.3, 2.1, 1.9, 1.6, 1.4, 1.1, 0.9, 0.8],
+                29: [0.7, 0.7, 0.8, 1.0, 1.3, 1.4, 1.6, 1.8, 2.0, 2.1, 2.1, 2.1, 2.1, 2.1, 2.2, 2.2, 2.1, 2.0, 1.9, 1.7, 1.5, 1.3, 1.1, 1.0],
+                30: [0.9, 0.9, 1.0, 1.2, 1.4, 1.5, 1.7, 1.8, 1.9, 2.0, 2.0, 2.0, 2.0, 2.0, 1.9, 1.9, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3, 1.2],
+                31: [1.2, 1.2, 1.2, 1.4, 1.5, 1.7, 1.8, 1.9, 2.0, 2.0, 2.0, 2.0, 1.9, 1.8, 1.7, 1.7, 1.6, 1.6, 1.5, 1.5, 1.4, 1.4, 1.3, 1.3]
+            }
+        };
+
+        // --- APP STATE ---
+        let currentMonth = 10;
+        let currentDay = 1;
+        let currentHour = 12;
+        let chartInstance = null;
+
+        // --- DOM ELEMENTS ---
+        const monthSelect = document.getElementById('monthSelect');
+        const daySelect = document.getElementById('daySelect');
+        const hourSelect = document.getElementById('hourSelect');
+        const todayBtn = document.getElementById('todayBtn');
+        const tableBody = document.getElementById('tableBody');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+
+        // Recommendation Box Elements
+        const recDateLabel = document.getElementById('recDateLabel');
+        const totalOpenHoursBadge = document.getElementById('totalOpenHoursBadge');
+        const recommendedTimeSlots = document.getElementById('recommendedTimeSlots');
+
+        // Active Status Card DOM
+        const statusCard = document.getElementById('statusCard');
+        const statusBadge = document.getElementById('statusBadge');
+        const selectedTimeLabel = document.getElementById('selectedTimeLabel');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusDesc = document.getElementById('statusDesc');
+        const currentTailWater = document.getElementById('currentTailWater');
+        const currentRawWater = document.getElementById('currentRawWater');
+        const waterTrend = document.getElementById('waterTrend');
+        const waterDiff = document.getElementById('waterDiff');
+        const chartSubTitle = document.getElementById('chartSubTitle');
+
+        // --- INIT APP ---
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            populateDays();
+            populateHours();
+            initChart();
+            updateApp();
+
+            // Event Listeners
+            monthSelect.addEventListener('change', (e) => {
+                currentMonth = parseInt(e.target.value);
+                populateDays();
+                updateApp();
+            });
+
+            daySelect.addEventListener('change', (e) => {
+                currentDay = parseInt(e.target.value);
+                updateApp();
+            });
+
+            hourSelect.addEventListener('change', (e) => {
+                currentHour = parseInt(e.target.value);
+                updateApp();
+            });
+
+            todayBtn.addEventListener('click', () => {
+                currentDay = 1;
+                currentHour = 12;
+                daySelect.value = 1;
+                hourSelect.value = 12;
+                updateApp();
+            });
+
+            exportCsvBtn.addEventListener('click', exportToCSV);
+        });
+
+        // --- HELPER FUNCTIONS ---
+        function populateDays() {
+            const daysInMonth = Object.keys(tideData[currentMonth]).length;
+            daySelect.innerHTML = '';
+            for (let d = 1; d <= daysInMonth; d++) {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = `วันที่ ${d}`;
+                if (d === currentDay) opt.selected = true;
+                daySelect.appendChild(opt);
+            }
+            if (currentDay > daysInMonth) {
+                currentDay = 1;
+            }
+        }
+
+        function populateHours() {
+            hourSelect.innerHTML = '';
+            for (let h = 0; h < 24; h++) {
+                const opt = document.createElement('option');
+                opt.value = h;
+                opt.textContent = `${h.toString().padStart(2, '0')}:00 น.`;
+                if (h === currentHour) opt.selected = true;
+                hourSelect.appendChild(opt);
+            }
+        }
+
+        function getMonthName(m) {
+            const names = { 10: 'ตุลาคม 2569', 11: 'พฤศจิกายน 2569', 12: 'ธันวาคม 2569' };
+            return names[m] || '';
+        }
+
+        // --- ANALYSIS LOGIC ---
+        function analyzeWater(month, day, hour) {
+            const rawDayData = tideData[month][day];
+            const tailDayData = rawDayData.map(v => Number((v - 0.95).toFixed(2)));
+
+            const currentVal = tailDayData[hour];
+            const rawVal = rawDayData[hour];
+
+            const prevVal = hour > 0 ? tailDayData[hour - 1] : currentVal;
+            const nextVal = hour < 23 ? tailDayData[hour + 1] : currentVal;
+
+            const diffFromPrev = Number((currentVal - prevVal).toFixed(2));
+            const diffToNext = Number((nextVal - currentVal).toFixed(2));
+
+            let trend = 'STABLE';
+            let action = 'HOLD';
+
+            if (diffToNext < 0 || (diffToNext === 0 && diffFromPrev < 0)) {
+                trend = 'FALLING';
+                action = 'OPEN';
+            } else if (diffToNext > 0 || (diffToNext === 0 && diffFromPrev > 0)) {
+                trend = 'RISING';
+                action = 'CLOSE';
+            } else {
+                trend = 'STABLE';
+                action = 'HOLD';
+            }
+
+            return {
+                rawVal,
+                currentVal,
+                diffFromPrev,
+                diffToNext,
+                trend,
+                action,
+                tailDayData,
+                rawDayData
+            };
+        }
+
+        // Detect all continuous time slots suitable for gate opening (Falling tide)
+        function findOptimalGateOpenWindows(tailDayData) {
+            const windows = [];
+            let currentWindow = null;
+
+            for (let h = 0; h < 24; h++) {
+                const currentVal = tailDayData[h];
+                const prevVal = h > 0 ? tailDayData[h - 1] : currentVal;
+                const nextVal = h < 23 ? tailDayData[h + 1] : currentVal;
+                const diffToNext = Number((nextVal - currentVal).toFixed(2));
+
+                const isFalling = diffToNext < 0 || (diffToNext === 0 && (currentVal - prevVal) < 0);
+
+                if (isFalling) {
+                    if (!currentWindow) {
+                        currentWindow = { startHour: h, endHour: h, waterStart: currentVal, waterEnd: currentVal };
+                    } else {
+                        currentWindow.endHour = h;
+                        currentWindow.waterEnd = currentVal;
+                    }
+                } else {
+                    if (currentWindow) {
+                        windows.push(currentWindow);
+                        currentWindow = null;
+                    }
+                }
+            }
+
+            if (currentWindow) {
+                windows.push(currentWindow);
+            }
+
+            return windows;
+        }
+
+        // --- UPDATE UI COMPONENTS ---
+        function updateApp() {
+            const analysis = analyzeWater(currentMonth, currentDay, currentHour);
+            
+            // 1. Render Smart Recommendations for Selected Date
+            renderSmartRecommendations(analysis.tailDayData);
+
+            // 2. Update Hour Detailed Card
+            selectedTimeLabel.textContent = `วันที่ ${currentDay} ${getMonthName(currentMonth)} เวลา ${currentHour.toString().padStart(2, '0')}:00 น.`;
+            currentTailWater.textContent = `${analysis.currentVal > 0 ? '+' : ''}${analysis.currentVal.toFixed(2)} ม.`;
+            currentRawWater.textContent = `${analysis.rawVal.toFixed(2)} ม.`;
+
+            let diffText = analysis.diffToNext > 0 ? `+${analysis.diffToNext.toFixed(2)} ม.` : `${analysis.diffToNext.toFixed(2)} ม.`;
+            waterDiff.textContent = diffText;
+
+            if (analysis.action === 'OPEN') {
+                statusCard.className = 'md:col-span-2 rounded-2xl border p-6 flex flex-col justify-between transition-all duration-300 shadow-sm bg-gradient-to-br from-emerald-50/80 to-teal-50/50 border-emerald-200';
+                statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-100 text-emerald-800';
+                statusBadge.innerHTML = `<i data-lucide="check-circle-2" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i> แนะนำ: เปิดบานระบายน้ำ`;
+                statusTitle.textContent = 'ช่วงน้ำทะเลกำลังลง (สามารถเปิดระบายน้ำได้ดี)';
+                statusTitle.className = 'text-2xl font-bold mb-2 text-emerald-900';
+                statusDesc.textContent = 'ระดับน้ำทะเลด้านท้าย ปตร. มีแนวโน้มลดลงอย่างต่อเนื่อง เหมาะสมต่อการเปิดประตูระบายน้ำเพื่อระบายน้ำออกจากคลองภักดีรำไพ โดยกระแสน้ำจะไม่ต้านเรือประมง';
+                waterTrend.textContent = 'น้ำกำลังลง 📉';
+                waterTrend.className = 'text-lg font-bold text-emerald-700 mt-1';
+            } else if (analysis.action === 'CLOSE') {
+                statusCard.className = 'md:col-span-2 rounded-2xl border p-6 flex flex-col justify-between transition-all duration-300 shadow-sm bg-gradient-to-br from-rose-50/80 to-red-50/50 border-rose-200';
+                statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border border-rose-300 bg-rose-100 text-rose-800';
+                statusBadge.innerHTML = `<i data-lucide="x-circle" class="w-3.5 h-3.5 mr-1 text-rose-600"></i> เตือน: ควรปิดบานระบายน้ำ`;
+                statusTitle.textContent = 'ช่วงน้ำทะเลกำลังขึ้น (ควรปิดบานระบาย)';
+                statusTitle.className = 'text-2xl font-bold mb-2 text-rose-900';
+                statusDesc.textContent = 'ระดับน้ำทะเลด้านท้าย ปตร. กำลังเพิ่มสูงขึ้น ต้องปิดบานประตูระบายน้ำทันทีเพื่อป้องกันน้ำเค็มไหลย้อนกลับเข้าคลองภักดีรำไพ และลดแรงต้านเรือประมง';
+                waterTrend.textContent = 'น้ำกำลังขึ้น 📈';
+                waterTrend.className = 'text-lg font-bold text-rose-700 mt-1';
+            } else {
+                statusCard.className = 'md:col-span-2 rounded-2xl border p-6 flex flex-col justify-between transition-all duration-300 shadow-sm bg-slate-50 border-slate-200';
+                statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border border-slate-300 bg-slate-200 text-slate-800';
+                statusBadge.innerHTML = `<i data-lucide="minus-circle" class="w-3.5 h-3.5 mr-1 text-slate-600"></i> เฝ้าระวัง: น้ำทรงตัว`;
+                statusTitle.textContent = 'ระดับน้ำทะเลทรงตัว';
+                statusTitle.className = 'text-2xl font-bold mb-2 text-slate-800';
+                statusDesc.textContent = 'ระดับน้ำทะเลเปลี่ยนแปลงน้อยมาก ให้เตรียมพร้อมและเฝ้าระวังสำหรับการเปิด-ปิดประตูระบายน้ำตามรอบถัดไป';
+                waterTrend.textContent = 'น้ำทรงตัว ➡️';
+                waterTrend.className = 'text-lg font-bold text-slate-700 mt-1';
+            }
+
+            lucide.createIcons();
+
+            // 3. Update Table & Chart
+            renderTable(analysis.rawDayData, analysis.tailDayData);
+            updateChart(analysis.rawDayData, analysis.tailDayData);
+        }
+
+        // --- RENDER SMART RECOMMENDATIONS ---
+        function renderSmartRecommendations(tailDayData) {
+            recDateLabel.textContent = `${currentDay} ${getMonthName(currentMonth)}`;
+            const openWindows = findOptimalGateOpenWindows(tailDayData);
+
+            recommendedTimeSlots.innerHTML = '';
+            let totalHours = 0;
+
+            if (openWindows.length === 0) {
+                totalOpenHoursBadge.textContent = `ไม่มีช่วงน้ำลงเด่นชัด`;
+                recommendedTimeSlots.innerHTML = `
+                    <div class="col-span-2 bg-slate-800/80 p-4 rounded-xl border border-slate-700 text-slate-300 text-sm text-center">
+                        ไม่มีช่วงเวลาน้ำทะเลลงเด่นชัดในวันนี้ ให้ควบคุมตามดุลยพินิจและเฝ้าระวังระดับน้ำ
+                    </div>
+                `;
+                return;
+            }
+
+            openWindows.forEach((win, idx) => {
+                const duration = (win.endHour - win.startHour) + 1;
+                totalHours += duration;
+
+                const startStr = `${win.startHour.toString().padStart(2, '0')}:00`;
+                const endStr = `${(win.endHour + 1).toString().padStart(2, '0')}:00`;
+
+                const slotDiv = document.createElement('div');
+                slotDiv.className = "bg-emerald-950/60 border border-emerald-500/40 rounded-xl p-3.5 flex items-center justify-between hover:bg-emerald-900/60 transition cursor-pointer";
+                slotDiv.onclick = () => {
+                    currentHour = win.startHour;
+                    hourSelect.value = win.startHour;
+                    updateApp();
+                };
+
+                slotDiv.innerHTML = `
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping"></span>
+                            <span class="font-bold text-emerald-200 text-sm">ช่วงที่ ${idx + 1}: เวลา ${startStr} - ${endStr} น.</span>
+                        </div>
+                        <p class="text-xs text-slate-300 mt-1">
+                            ระดับน้ำท้าย ปตร. ช่วงนี้: <span class="text-emerald-300 font-semibold">${win.waterStart > 0 ? '+' : ''}${win.waterStart.toFixed(2)} ม.</span> ถึง <span class="text-emerald-300 font-semibold">${win.waterEnd > 0 ? '+' : ''}${win.waterEnd.toFixed(2)} ม.</span>
+                        </p>
+                    </div>
+                    <div class="text-right flex flex-col items-end">
+                        <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 font-bold rounded-lg text-xs border border-emerald-500/30">
+                            ระบายน้ำได้ ~${duration} ชม.
+                        </span>
+                        <span class="text-[10px] text-emerald-400/80 mt-1">คลิกเพื่อดูข้อมูลชั่วโมงนี้</span>
+                    </div>
+                `;
+
+                recommendedTimeSlots.appendChild(slotDiv);
+            });
+
+            totalOpenHoursBadge.textContent = `รวมระบายน้ำได้ประมาณ ${totalHours} ชั่วโมง/วัน`;
+        }
+
+        // --- RENDER TABLE ---
+        function renderTable(rawDayData, tailDayData) {
+            tableBody.innerHTML = '';
+            chartSubTitle.textContent = `ประจำวันที่ ${currentDay} ${getMonthName(currentMonth)}`;
+
+            for (let h = 0; h < 24; h++) {
+                const rawVal = rawDayData[h];
+                const tailVal = tailDayData[h];
+                
+                const prevVal = h > 0 ? tailDayData[h - 1] : tailVal;
+                const nextVal = h < 23 ? tailDayData[h + 1] : tailVal;
+                const diffNext = Number((nextVal - tailVal).toFixed(2));
+
+                let isFalling = diffNext < 0 || (diffNext === 0 && (tailVal - prevVal) < 0);
+                let isRising = diffNext > 0 || (diffNext === 0 && (tailVal - prevVal) > 0);
+
+                const tr = document.createElement('tr');
+                const isSelected = h === currentHour;
+
+                tr.className = `border-b transition hover:bg-blue-50/60 cursor-pointer ${isSelected ? 'bg-blue-100/80 font-semibold text-blue-900' : 'bg-white'}`;
+                tr.onclick = () => {
+                    currentHour = h;
+                    hourSelect.value = h;
+                    updateApp();
+                };
+
+                let trendBadge = '';
+                let actionBadge = '';
+
+                if (isFalling) {
+                    trendBadge = `<span class="text-emerald-600 font-medium inline-flex items-center"><i data-lucide="trending-down" class="w-4 h-4 mr-1"></i> น้ำลง (${diffNext}ม.)</span>`;
+                    actionBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> เปิดระบายน้ำ</span>`;
+                } else if (isRising) {
+                    trendBadge = `<span class="text-rose-600 font-medium inline-flex items-center"><i data-lucide="trending-up" class="w-4 h-4 mr-1"></i> น้ำขึ้น (+${diffNext}ม.)</span>`;
+                    actionBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 inline-flex items-center gap-1"><i data-lucide="x" class="w-3 h-3"></i> ควรปิดบานประตู</span>`;
+                } else {
+                    trendBadge = `<span class="text-slate-500 font-medium inline-flex items-center"><i data-lucide="minus" class="w-4 h-4 mr-1"></i> ทรงตัว (0.00ม.)</span>`;
+                    actionBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300">เฝ้าระวัง</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center font-bold">${h.toString().padStart(2, '0')}:00 น.</td>
+                    <td class="py-3 px-4 text-center text-slate-500">${rawVal.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-center font-bold text-blue-700 bg-blue-50/30">${tailVal > 0 ? '+' : ''}${tailVal.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-center">${trendBadge}</td>
+                    <td class="py-3 px-4 text-center">${actionBadge}</td>
+                `;
+
+                tableBody.appendChild(tr);
+            }
+            lucide.createIcons();
+        }
+
+        // --- CHART MANAGEMENT ---
+        function initChart() {
+            const ctx = document.getElementById('tideChart').getContext('2d');
+            const hoursArr = Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: hoursArr,
+                    datasets: [
+                        {
+                            label: 'ระดับน้ำท้าย ปตร. (-0.95m)',
+                            data: [],
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#1d4ed8'
+                        },
+                        {
+                            label: 'ระดับน้ำทำนายแหลมสิงห์เดิม',
+                            data: [],
+                            borderColor: '#cbd5e1',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            pointBackgroundColor: '#94a3b8'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(2) + ' ม.';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'ระดับน้ำ (เมตร)',
+                                font: { family: 'Sarabun', size: 12 }
+                            },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { color: '#f8fafc' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart(rawDayData, tailDayData) {
+            if (!chartInstance) return;
+
+            chartInstance.data.datasets[0].data = tailDayData;
+            chartInstance.data.datasets[1].data = rawDayData;
+
+            const pointBackgroundColors = tailDayData.map((_, idx) => idx === currentHour ? '#ef4444' : '#1d4ed8');
+            const pointRadii = tailDayData.map((_, idx) => idx === currentHour ? 8 : 4);
+
+            chartInstance.data.datasets[0].pointBackgroundColor = pointBackgroundColors;
+            chartInstance.data.datasets[0].pointRadius = pointRadii;
+
+            chartInstance.update();
+        }
+
+        // --- CSV EXPORT FUNCTION ---
+        function exportToCSV() {
+            const rawDayData = tideData[currentMonth][currentDay];
+            const tailDayData = rawDayData.map(v => Number((v - 0.95).toFixed(2)));
+
+            let csvContent = "\uFEFF";
+            csvContent += `รายงานการวิเคราะห์และช่วงเวลาเปิดประตูระบายน้ำ ปตร.ปลายคลองภักดีรำไพ\n`;
+            csvContent += `ประจำวันที่ ${currentDay} ${getMonthName(currentMonth)}\n\n`;
+            csvContent += `เวลา,ระดับน้ำแหลมสิงห์เดิม (ม.),ระดับน้ำท้าย ปตร. (-0.95ม.),แนวโน้ม,คำแนะนำการระบายน้ำ\n`;
+
+            for (let h = 0; h < 24; h++) {
+                const rawVal = rawDayData[h];
+                const tailVal = tailDayData[h];
+                
+                const prevVal = h > 0 ? tailDayData[h - 1] : tailVal;
+                const nextVal = h < 23 ? tailDayData[h + 1] : tailVal;
+                const diffNext = Number((nextVal - tailVal).toFixed(2));
+
+                let actionText = "ทรงตัว / เฝ้าระวัง";
+                if (diffNext < 0 || (diffNext === 0 && (tailVal - prevVal) < 0)) {
+                    actionText = "น้ำลง - ควรเปิดระบายน้ำ";
+                } else if (diffNext > 0 || (diffNext === 0 && (tailVal - prevVal) > 0)) {
+                    actionText = "น้ำขึ้น - ควรปิดบานประตู";
+                }
+
+                csvContent += `"${h.toString().padStart(2, '0')}:00",${rawVal.toFixed(2)},${tailVal.toFixed(2)},"${diffNext} ม.", "${actionText}"\n`;
+            }
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `รายงานระบายน้ำ_ปตร_คลองภักดีรำไพ_${currentDay}_${currentMonth}_2569.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
